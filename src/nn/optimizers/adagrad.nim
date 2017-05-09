@@ -2,7 +2,7 @@ import "../nnenv"
 import optimizer
 import "../../linalg/matrix"
 
-import math
+import math, future
 
 type
   AdaGrad* = ref object of Optimizer
@@ -17,4 +17,4 @@ method update*(self: var AdaGrad, weights: var Matrix[NNFloat], gradients: var M
     self.h = newMat[NNFloat](gradients.row, gradients.col)
   
   self.h = self.h + gradients @* gradients
-  weights = weights - (self.lr * gradients @/ (self.h.map(sqrt) + 1e-7))
+  weights = weights - (self.lr * gradients @/ (self.h.map((a) => sqrt(a)) + 1e-7))

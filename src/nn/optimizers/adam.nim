@@ -2,7 +2,7 @@ import "../nnenv"
 import optimizer
 import "../../linalg/matrix"
 
-import math
+import math, future
 
 type
   Adam* = ref object of Optimizer
@@ -29,4 +29,4 @@ method update*(self: var Adam, weights: var Matrix[NNFloat], gradients: var Matr
 
   self.m = self.m + (1.0 - self.beta1) @* (gradients - self.m)
   self.v = self.v + (1.0 - self.beta2) @* (gradients ^ 2 - self.v)
-  gradients = gradients - lr*self.m @/ (self.v.map(sqrt) + 1e-7)
+  gradients = gradients - lr*self.m @/ (self.v.map((a) => sqrt(a)) + 1e-7)

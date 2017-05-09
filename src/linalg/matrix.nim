@@ -1,4 +1,4 @@
-import random, typetraits, sequtils
+import random, typetraits, sequtils, future
 
 type
   Matrix*[T] = ref object of RootObj
@@ -135,32 +135,32 @@ proc t*[T](self: Matrix[T]): Matrix[T] {.noSideEffect.} =
     for j in 0..<self.col:
       result[j,i] = self[i,j]
 
-proc reduce*[T, S](self: Matrix[T], init: S, f: proc(acc: S, val: T, row, col: int): S): S {.noSideEffect.} =
+proc reduce*[T, S](self: Matrix[T], init: S, f: (S, T, int, int) -> S): S {.noSideEffect.} =
   result = init
   for i in 0..<self.row:
     for j in 0..<self.col:
       result = f(result, self[i,j], i, j)
 
-proc reduce*[T, S](self: Matrix[T], init: S, f: proc(acc: S, val: T): S): S {.noSideEffect.} = 
+proc reduce*[T, S](self: Matrix[T], init: S, f: (S, T) -> S): S {.noSideEffect.} = 
   self.reduce(init, proc(acc: S, val: T, row, col: int): S = f(acc, val))
 
-proc reduceRows*[T, S](self: Matrix[T], init: S, f: proc(acc: S; val: T; row, col: int): S): Matrix[S] {.noSideEffect.} =
+proc reduceRows*[T, S](self: Matrix[T], init: S, f: (S, T, int, int) -> S): Matrix[S] {.noSideEffect.} =
   result = newMat[S](self.row, 1)
   for i in 0..<self.row:
     result[i,0] = init
     for j in 0..<self.col:
       result[i,0] = f(result[i,0], self[i,j], i, j)
 
-proc reduceRows*[T, S](self: Matrix[T], init: S, f: proc(acc: S; val: T): S): Matrix[S] {.noSideEffect.} =
+proc reduceRows*[T, S](self: Matrix[T], init: S, f: (S, T) -> S): Matrix[S] {.noSideEffect.} =
   self.reduceRows(init, proc(acc: S, val: T, row, col: int): S = f(acc, val))
 
-proc transform*[T, S](self: Matrix[T], f: proc(val: T; row, col: int): S): Matrix[S] {.noSideEffect.} =
+proc transform*[T, S](self: Matrix[T], f: (T, int, int) -> S): Matrix[S] {.noSideEffect.} =
   result = newMat[S](self.row, self.col)
   for i in 0..<self.row:
     for j in 0..<self.col:
       result[i,j] = f(self[i,j], i, j)
 
-proc transform*[T, S](self: Matrix[T], f: proc(val: T): S): Matrix[S] {.noSideEffect.} = 
+proc transform*[T, S](self: Matrix[T], f: T -> S): Matrix[S] {.noSideEffect.} = 
   self.transform(proc(val: T; row, col: int): S = f(val))
 
 proc slice*[T](self: Matrix[T]; lb, ub: int): Matrix[T] {.noSideEffect.} =
