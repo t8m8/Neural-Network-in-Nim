@@ -3,7 +3,7 @@ import "layers/layers", "lossfuncs/lossfuncs", "optimizers/optimizers", "measure
 import "../linalg/matrix"
 import "../utils/mysequtils"
 
-import algorithm
+import algorithm, future
 
 const DEBUG = false
 
@@ -46,9 +46,7 @@ proc predict*(self: var Network, input: Matrix[NNFloat]): Matrix[int] =
   result = self.lossfunc.predictFromProbs(probs)
 
 proc lossFromProbs(self: var Network; predictions, expected: Matrix[NNFloat]): NNFloat =
-  self.lossfunc.loss(predictions, expected).reduce(0.0, proc(acc, val: NNFloat): NNFloat =
-    acc + val
-  )
+  self.lossfunc.loss(predictions, expected).reduce(0.0, (acc, val: NNFloat) => acc + val)
 
 proc loss*(self: var Network; input, expected: Matrix[NNFloat]): NNFloat =
   var probs = self.probs(input)
@@ -93,7 +91,7 @@ proc runBatch(self: var Network; input, expected: Matrix[NNFloat]; options: Opti
     var
       (idx, gradient) = (item.idx, item.gradient)
       links = Links(self.layers[idx])
-      weights = links.weights.transform(proc(val: NNFloat): NNFloat = val / input.row.NNFloat)
+      weights = links.weights.transform((val: NNFloat) => val / input.row.NNFloat)
     self.optimizer.update(weights, gradient)
   let loss = self.lossFromProbs(outputs.last, expected)
   let (hit, miss) = self.hitMissCntFromProbs(outputs.last, expected)

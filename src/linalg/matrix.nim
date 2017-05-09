@@ -73,7 +73,7 @@ proc `+`*[T](x, y: Matrix[T]): Matrix[T] {.noSideEffect.} =
 
 proc `+`*[T](x: Matrix[T], y: T): Matrix[T] {.noSideEffect.} =
   result = newMat[T](x.row, x.col)
-  result.elm = x.elm.map(proc(val: float64): float64 = val+y)
+  result.elm = x.elm.map((val: float64) => val+y)
 
 proc `+`*[T](y: T, x: Matrix[T]): Matrix[T] {.noSideEffect.} = x + y
 
@@ -84,11 +84,11 @@ proc `-`*[T](x, y: Matrix[T]): Matrix[T] {.noSideEffect.} =
 
 proc `-`*[T](x: Matrix[T], y: T): Matrix[T] {.noSideEffect.} =
   result = newMat[T](x.row, x.col)
-  result.elm = x.elm.map(proc(val: float64): float64 = val-y)
+  result.elm = x.elm.map((val: float64) => val-y)
 
 proc `-`*[T](y: T, x: Matrix[T]): Matrix[T] {.noSideEffect.} =
   result = newMat[T](x.row, x.col)
-  result.elm = x.elm.map(proc(val: float64): float64 = y-val)
+  result.elm = x.elm.map((val: float64) => y-val)
 
 proc `*`*[T](x, y: Matrix[T]): Matrix[T] {.noSideEffect.} =
   result = newMat[T](x.row, y.col)
@@ -99,7 +99,7 @@ proc `*`*[T](x, y: Matrix[T]): Matrix[T] {.noSideEffect.} =
 
 proc `*`*[T](x: Matrix[T], y: T): Matrix[T] {.noSideEffect.} =
   result = newMat[T](x.row, x.col)
-  result.elm = x.elm.map(proc(val:float64): float64 = val*y)
+  result.elm = x.elm.map((val:float64) => val*y)
 
 proc `*`*[T](y: T, x: Matrix[T]): Matrix[T] {.noSideEffect.} = x * y
 
@@ -111,7 +111,7 @@ proc `^`*[T](x: Matrix[T], n: int): Matrix[T] {.noSideEffect.} =
 
 proc `/`*[T](x: Matrix[T], y: T): Matrix[T] {.noSideEffect.} =
   result = newMat[T](x.row, x.col)
-  result.elm = x.elm.map(proc(val: float64): float64 = val/y)
+  result.elm = x.elm.map((val: float64) => val/y)
 
 proc `/`*[T](y: T, x: Matrix[T]): Matrix[T] {.noSideEffect.} = x / y
 
@@ -125,7 +125,7 @@ proc `@/`*[T](x, y: Matrix[T]): Matrix[T] {.noSideEffect.} =
   for i in 0..<x.elm.len:
     result.elm[i] = x.elm[i] / y.elm[i]
 
-proc map*[T](self: Matrix[T], f: proc(val: T): T): Matrix[T] {.noSideEffect.} =
+proc map*[T](self: Matrix[T], f: T -> T): Matrix[T] {.noSideEffect.} =
   result = newMat[T](self.row, self.col)
   result.elm = self.elm.map(f)
 
@@ -142,7 +142,7 @@ proc reduce*[T, S](self: Matrix[T], init: S, f: (S, T, int, int) -> S): S {.noSi
       result = f(result, self[i,j], i, j)
 
 proc reduce*[T, S](self: Matrix[T], init: S, f: (S, T) -> S): S {.noSideEffect.} = 
-  self.reduce(init, proc(acc: S, val: T, row, col: int): S = f(acc, val))
+  self.reduce(init, (acc: S, val: T, row, col) => f(acc, val))
 
 proc reduceRows*[T, S](self: Matrix[T], init: S, f: (S, T, int, int) -> S): Matrix[S] {.noSideEffect.} =
   result = newMat[S](self.row, 1)
@@ -152,7 +152,7 @@ proc reduceRows*[T, S](self: Matrix[T], init: S, f: (S, T, int, int) -> S): Matr
       result[i,0] = f(result[i,0], self[i,j], i, j)
 
 proc reduceRows*[T, S](self: Matrix[T], init: S, f: (S, T) -> S): Matrix[S] {.noSideEffect.} =
-  self.reduceRows(init, proc(acc: S, val: T, row, col: int): S = f(acc, val))
+  self.reduceRows(init, (acc: S, val: T, row, col) => f(acc, val))
 
 proc transform*[T, S](self: Matrix[T], f: (T, int, int) -> S): Matrix[S] {.noSideEffect.} =
   result = newMat[S](self.row, self.col)
@@ -161,7 +161,7 @@ proc transform*[T, S](self: Matrix[T], f: (T, int, int) -> S): Matrix[S] {.noSid
       result[i,j] = f(self[i,j], i, j)
 
 proc transform*[T, S](self: Matrix[T], f: T -> S): Matrix[S] {.noSideEffect.} = 
-  self.transform(proc(val: T; row, col: int): S = f(val))
+  self.transform((val: T, row, col) => f(val))
 
 proc slice*[T](self: Matrix[T]; lb, ub: int): Matrix[T] {.noSideEffect.} =
   # [lb, ub]

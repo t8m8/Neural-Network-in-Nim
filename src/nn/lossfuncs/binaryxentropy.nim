@@ -1,7 +1,7 @@
 import "../nnenv"
 import "../../linalg/matrix"
 import lossfunc
-import math
+import math, future
 
 type
   BinaryCrossEntropy = ref object of LossFunc
@@ -18,7 +18,7 @@ method loss*(self: BinaryCrossEntropy, output: Matrix[NNFloat], expected: Matrix
   )
 
 method delta*(self: BinaryCrossEntropy, output: Matrix[NNFloat], expected: Matrix[NNFloat]): Matrix[NNFloat] {.noSideEffect.} = 
-  result = output.transform(proc(val: NNFloat; row, col: int): NNFloat = val - expected[row, col])
+  result = output.transform((val: NNFloat, row, col) => val - expected[row, col])
 
 method predictFromProbs*(self: BinaryCrossEntropy, probs: Matrix[NNFloat]): Matrix[int] {.noSideEffect.} =
   result = probs.transform(proc(val: NNFloat): int =
