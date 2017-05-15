@@ -1,5 +1,5 @@
 import network
-import "layers/layers", "lossfuncs/lossfuncs", "optimizers/optimizers"
+import layers, lossfuncs, optimizers
 
 type
   NNBuilder* = ref object of RootObj

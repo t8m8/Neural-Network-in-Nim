@@ -1,5 +1,5 @@
 import nnenv
-import "layers/layers", "lossfuncs/lossfuncs", "optimizers/optimizers", "measures/measures", options
+import layers, lossfuncs, optimizers, measures, options
 import "../linalg/matrix"
 import "../utils/mysequtils"
 
@@ -54,7 +54,7 @@ proc loss*(self: var Network; input, expected: Matrix[NNFloat]): NNFloat =
 
 proc hitMissCntFromProbs(self: var Network; probs, expected: Matrix[NNFloat]): tuple[hit, miss: int] =
   var
-    probNorm = self.lossfunc.predictFromProbs(probs) 
+    probNorm = self.lossfunc.predictFromProbs(probs)
     expectedNorm = self.lossfunc.predictFromProbs(expected)
   result = probNorm.reduce(
     (0, 0),
@@ -67,19 +67,19 @@ proc hitMissCntFromProbs(self: var Network; probs, expected: Matrix[NNFloat]): t
 
 proc forward*(self: var Network, input: Matrix[NNFloat]): seq[Matrix[NNFloat]] =
   result = newSeq[Matrix[NNFloat]]()
-  result.add(self.layers[0].compute(input))
+  result.add(self.layers[0].forward(input))
   for i in 1..<self.layers.len:
-    result.add(self.layers[i].compute(result.last))
+    result.add(self.layers[i].forward(result.last))
 
 proc backward*(self: var Network; outputs: seq[Matrix[NNFloat]], expected: Matrix[NNFloat]): seq[tuple[idx: int, gradient: Matrix[NNFloat]]] =
   result = newSeq[tuple[idx: int, gradient: Matrix[NNFloat]]]()
-  var localGrads = @[self.lossfunc.delta(outputs.last, expected)]
+  var localGrads = @[self.lossfunc.backward(outputs.last, expected)]
   for i in countDown(self.layers.len-2, 1):
     if self.layers[i] of Links:
       let gradient = outputs[i-1].t() * localGrads.last
       result.add((i, gradient))
 
-    let localGrad = self.layers[i].delta(outputs[i], localGrads.last)
+    let localGrad = self.layers[i].backward(outputs[i], localGrads.last)
     localGrads.add(localGrad)
 
 proc checkGradient*(self: var Network; input, expected: Matrix[NNFloat]; gradients: seq[tuple[idx: int, gradient: Matrix[NNFloat]]]; options: Options)
@@ -112,7 +112,7 @@ proc runEpoch(self: var Network; input, expected: Matrix[NNFloat]; options: Opti
     self.update(res, (ub - lb + 1), hit, miss, loss)
     options.formatter.batchEnd(res)
 
-proc train*(self: var Network, input, expected: Matrix[NNFloat], options: Options) = 
+proc train*(self: var Network, input, expected: Matrix[NNFloat], options: Options) =
   for i in 1..options.epochs:
     options.formatter.epochStart(i, options.epochs)
     self.runEpoch(input, expected, options)
@@ -137,4 +137,4 @@ proc checkGradient*(self: var Network; input, expected: Matrix[NNFloat]; gradien
         links.weights[i, j] = x
         let numericDiff = (fx2 - fx1) / (2.0 * h)
         assert abs(gradient[i, j] -  numericDiff) <= 1e-6, $gradient[i, j] & " " & $numericDiff
-      
+

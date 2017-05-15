@@ -1,5 +1,5 @@
 import nnenv
-import "measures/measures"
+import measures
 
 type
   Options* = ref object of RootObj

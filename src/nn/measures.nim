@@ -1,5 +1,5 @@
-import "../nnenv"
-import "../../utils/mysequtils"
+import nnenv
+import "../utils/mysequtils"
 
 type
   TrResults* = ref object of RootObj
@@ -9,21 +9,22 @@ type
     hitCount*: int
     missCount*: int
 
+  Formatter* = ref object of RootObj
+    measures*: seq[Measure]
+    progressWidth: int
+    flag: bool
+
   Measure* = ref object of RootObj
+
+  Accuracy* = ref object of Measure
+
+  MeanLoss* = ref object of Measure
 
 method `$`*(self: Measure): string {.base.} =
   assert false
 
 method compute*(self: Measure, res: TrResults): NNFloat {.base.} =
   assert false
-
-
-
-type
-  Formatter* = ref object of RootObj
-    measures*: seq[Measure]
-    progressWidth: int
-    flag: bool
 
 proc newFormatter*(): Formatter =
   new(result)
@@ -51,14 +52,30 @@ method batchEnd*(self: Formatter, res: TrResults) {.base.} =
 
   let per = res.currentCount * 100 / res.totalCount
   echo $res.currentCount & " / " & $res.totalCount & " (" & $per & "%)\n" &
-    "[" & bar & "]" 
+    "[" & bar & "]"
   for m in self.measures:
     echo $m & " = " & $m.compute(res)
 
-method epochStart*(self: Formatter, currentEpoch, totalEpochs: int) {.base.} = 
+method epochStart*(self: Formatter, currentEpoch, totalEpochs: int) {.base.} =
   if not self.flag: return
   echo "Training epoch " & $currentEpoch & " / " & $totalEpochs
 
 method epochEnd*(self: Formatter, currentEpoch, totalEpochs: int) {.base.} =
   if not self.flag: return
   echo ""
+
+proc newAccuracy*(): Accuracy =
+  new(result)
+
+method compute*(self: Accuracy, res: TrResults): NNFloat {.noSideEffect.} =
+  res.hitCount.NNFloat / res.currentCount.NNFloat
+
+method `$`*(self: Accuracy): string {.noSideEffect.} = "accuracy"
+
+proc newMeanLoss*(): MeanLoss =
+  new(result)
+
+method compute*(self: MeanLoss, res: TrResults): NNFloat {.noSideEffect.} =
+  res.totalLoss / res.currentCount.NNFloat
+
+method `$`*(self: MeanLoss): string {.noSideEffect.} = "mean loss"

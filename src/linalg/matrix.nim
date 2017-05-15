@@ -40,7 +40,7 @@ proc `[]`*[T](self: Matrix[T]; i, j: int): T {.inline, noSideEffect.} = self.elm
 proc setAt*[T](self: var Matrix[T]; i, j: int, val: T) {.inline, deprecated.} =
   self.elm[i*self.col + j] = val
 
-proc `[]=`*[T](self: var Matrix[T]; i, j: int, val: T) {.inline.} = 
+proc `[]=`*[T](self: var Matrix[T]; i, j: int, val: T) {.inline.} =
   self.elm[i*self.col + j] = val
 
 proc `==`*[T](x, y: var Matrix[T]): bool =
@@ -66,7 +66,7 @@ proc I*[T](dim: int): Matrix[T] {.noSideEffect.} =
   for i in 0..<dim:
     result[i,i] = 1.0
 
-proc `+`*[T](x, y: Matrix[T]): Matrix[T] {.noSideEffect.} = 
+proc `+`*[T](x, y: Matrix[T]): Matrix[T] {.noSideEffect.} =
   result = newMat[T](x.row, x.col)
   for i in 0..<x.elm.len:
     result.elm[i] = x.elm[i] + y.elm[i]
@@ -77,7 +77,7 @@ proc `+`*[T](x: Matrix[T], y: T): Matrix[T] {.noSideEffect.} =
 
 proc `+`*[T](y: T, x: Matrix[T]): Matrix[T] {.noSideEffect.} = x + y
 
-proc `-`*[T](x, y: Matrix[T]): Matrix[T] {.noSideEffect.} = 
+proc `-`*[T](x, y: Matrix[T]): Matrix[T] {.noSideEffect.} =
   result = newMat[T](x.row, x.col)
   for i in 0..<x.elm.len:
     result.elm[i] = x.elm[i] - y.elm[i]
@@ -141,7 +141,7 @@ proc reduce*[T, S](self: Matrix[T], init: S, f: (S, T, int, int) -> S): S {.noSi
     for j in 0..<self.col:
       result = f(result, self[i,j], i, j)
 
-proc reduce*[T, S](self: Matrix[T], init: S, f: (S, T) -> S): S {.noSideEffect.} = 
+proc reduce*[T, S](self: Matrix[T], init: S, f: (S, T) -> S): S {.noSideEffect.} =
   self.reduce(init, (acc: S, val: T, row, col) => f(acc, val))
 
 proc reduceRows*[T, S](self: Matrix[T], init: S, f: (S, T, int, int) -> S): Matrix[S] {.noSideEffect.} =
@@ -160,7 +160,7 @@ proc transform*[T, S](self: Matrix[T], f: (T, int, int) -> S): Matrix[S] {.noSid
     for j in 0..<self.col:
       result[i,j] = f(self[i,j], i, j)
 
-proc transform*[T, S](self: Matrix[T], f: T -> S): Matrix[S] {.noSideEffect.} = 
+proc transform*[T, S](self: Matrix[T], f: T -> S): Matrix[S] {.noSideEffect.} =
   self.transform((val: T, row, col) => f(val))
 
 proc slice*[T](self: Matrix[T]; lb, ub: int): Matrix[T] {.noSideEffect.} =

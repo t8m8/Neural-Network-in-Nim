@@ -1,2 +1,0 @@
-include lossfunc
-include xentropy, binaryxentropy
