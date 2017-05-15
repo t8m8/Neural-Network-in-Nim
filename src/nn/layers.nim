@@ -19,7 +19,7 @@ type
 
   Dense* = ref object of Links
 
-proc `[]=`*(self: var Links; row, col: int; w: NNFloat) =
+proc `[]=`*(self: var Links, row, col: int, w: NNFloat) =
   self.weights[row, col] = w
 
 method forward*(self: Layer, incoming: Matrix[NNFloat]): Matrix[NNFloat] {.base.} =
@@ -58,13 +58,14 @@ method forward*(self: ReLU, incoming: Matrix[NNFloat]): Matrix[NNFloat] {.noSide
 method backward*(self: ReLU, outgoing: Matrix[NNFloat], above: Matrix[NNFloat]): Matrix[NNFloat] {.noSideEffect.} =
   outgoing.transform((val: NNFloat) => ord(val > 0).NNFloat)
 
-proc newDense*(inputDim, outputDim: int; eps: NNFloat = 1e-4): Dense =
+proc newDense*(inputDim, outputDim: int, eps: NNFloat = 1e-4): Dense =
   new(result)
+  let d = 1.0 / inputDim.NNFloat
   result.inputDim = inputDim
   result.outputDim = outputDim
-  result.weights = newMatRandom[NNFloat](inputDim, outputDim, -eps, eps)
+  result.weights = newMatRandom[NNFloat](inputDim, outputDim, -d, d)
 
-proc newDense*(inputDim, outputDim: int; weights: Matrix[NNFloat]): Dense =
+proc newDense*(inputDim, outputDim: int, weights: Matrix[NNFloat]): Dense =
   new(result)
   result.inputDim = inputDim
   result.outputDim = outputDim

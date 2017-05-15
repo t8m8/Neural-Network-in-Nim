@@ -45,14 +45,14 @@ proc predict*(self: var Network, input: Matrix[NNFloat]): Matrix[int] =
   var probs = self.probs(input)
   result = self.lossfunc.predictFromProbs(probs)
 
-proc lossFromProbs(self: var Network; predictions, expected: Matrix[NNFloat]): NNFloat =
+proc lossFromProbs(self: var Network, predictions, expected: Matrix[NNFloat]): NNFloat =
   self.lossfunc.loss(predictions, expected).reduce(0.0, (acc, val: NNFloat) => acc + val)
 
-proc loss*(self: var Network; input, expected: Matrix[NNFloat]): NNFloat =
+proc loss*(self: var Network, input, expected: Matrix[NNFloat]): NNFloat =
   var probs = self.probs(input)
   self.lossFromProbs(probs, expected)
 
-proc hitMissCntFromProbs(self: var Network; probs, expected: Matrix[NNFloat]): tuple[hit, miss: int] =
+proc hitMissCntFromProbs(self: var Network, probs, expected: Matrix[NNFloat]): tuple[hit, miss: int] =
   var
     probNorm = self.lossfunc.predictFromProbs(probs)
     expectedNorm = self.lossfunc.predictFromProbs(expected)
@@ -66,39 +66,41 @@ proc hitMissCntFromProbs(self: var Network; probs, expected: Matrix[NNFloat]): t
   )
 
 proc forward*(self: var Network, input: Matrix[NNFloat]): seq[Matrix[NNFloat]] =
-  result = newSeq[Matrix[NNFloat]]()
-  result.add(self.layers[0].forward(input))
+  var outputs = newSeq[Matrix[NNFloat]]()
+  outputs.add(self.layers.head.forward(input))
   for i in 1..<self.layers.len:
-    result.add(self.layers[i].forward(result.last))
+    outputs.add(self.layers[i].forward(outputs.last))
+  result = outputs
 
-proc backward*(self: var Network; outputs: seq[Matrix[NNFloat]], expected: Matrix[NNFloat]): seq[tuple[idx: int, gradient: Matrix[NNFloat]]] =
-  result = newSeq[tuple[idx: int, gradient: Matrix[NNFloat]]]()
-  var localGrads = @[self.lossfunc.backward(outputs.last, expected)]
+proc backward*(self: var Network, outputs: seq[Matrix[NNFloat]], expected: Matrix[NNFloat]): seq[tuple[idx: int, grad: Matrix[NNFloat]]] =
+  var
+    grads = newSeq[tuple[idx: int, grad: Matrix[NNFloat]]]()
+    localGrads = @[self.lossfunc.backward(outputs.last, expected)]
   for i in countDown(self.layers.len-2, 1):
     if self.layers[i] of Links:
-      let gradient = outputs[i-1].t() * localGrads.last
-      result.add((i, gradient))
-
+      let grad = outputs[i-1].t() * localGrads.last
+      grads.add((i, grad))
     let localGrad = self.layers[i].backward(outputs[i], localGrads.last)
     localGrads.add(localGrad)
+  result = grads
 
-proc checkGradient*(self: var Network; input, expected: Matrix[NNFloat]; gradients: seq[tuple[idx: int, gradient: Matrix[NNFloat]]]; options: Options)
+proc checkGradient*(self: var Network, input, expected: Matrix[NNFloat], grads: seq[tuple[idx: int, grad: Matrix[NNFloat]]], options: Options)
 
-proc runBatch(self: var Network; input, expected: Matrix[NNFloat]; options: Options): tuple[hit, miss: int, loss: NNFloat] =
+proc runBatch(self: var Network, input, expected: Matrix[NNFloat], options: Options): tuple[hit, miss: int, loss: NNFloat] =
   var outputs = self.forward(input)
-  let gradients = self.backward(outputs, expected)
-  for item in gradients:
+  let grads = self.backward(outputs, expected)
+  for item in grads:
     var
-      (idx, gradient) = (item.idx, item.gradient)
+      (idx, grad) = (item.idx, item.grad)
       links = Links(self.layers[idx])
       weights = links.weights.transform((val: NNFloat) => val / input.row.NNFloat)
-    self.optimizer.update(weights, gradient)
+    self.optimizer.update(weights, grad)
   let loss = self.lossFromProbs(outputs.last, expected)
   let (hit, miss) = self.hitMissCntFromProbs(outputs.last, expected)
   result = (hit, miss, loss)
-  when DEBUG: self.checkGradient(input, expected, gradients, options)
+  when DEBUG: self.checkGradient(input, expected, grads, options)
 
-proc runEpoch(self: var Network; input, expected: Matrix[NNFloat]; options: Options) =
+proc runEpoch(self: var Network, input, expected: Matrix[NNFloat], options: Options) =
   let batches: int = (input.row + options.batchSize - 1) div options.batchSize
   var res = TrResults(totalCount: input.row)
   for i in 0..<batches:
@@ -119,13 +121,13 @@ proc train*(self: var Network, input, expected: Matrix[NNFloat], options: Option
     options.formatter.epochEnd(i, options.epochs)
 
 
-proc checkGradient*(self: var Network; input, expected: Matrix[NNFloat]; gradients: seq[tuple[idx: int, gradient: Matrix[NNFloat]]]; options: Options) =
+proc checkGradient*(self: var Network, input, expected: Matrix[NNFloat], grads: seq[tuple[idx: int, grad: Matrix[NNFloat]]], options: Options) =
   const h = 1e-4
   options.formatter.off
   defer: options.formatter.on
-  for item in gradients:
+  for item in grads:
     var
-      (idx, gradient) = (item.idx, item.gradient)
+      (idx, grad) = (item.idx, item.grad)
       links = Links(self.layers[idx])
     for i in 0..<links.weights.row:
       for j in 0..<links.weights.col:
@@ -136,5 +138,5 @@ proc checkGradient*(self: var Network; input, expected: Matrix[NNFloat]; gradien
         let fx2 = self.loss(input, expected)
         links.weights[i, j] = x
         let numericDiff = (fx2 - fx1) / (2.0 * h)
-        assert abs(gradient[i, j] -  numericDiff) <= 1e-6, $gradient[i, j] & " " & $numericDiff
+        assert abs(grad[i, j] -  numericDiff) <= 1e-6, $grad[i, j] & " " & $numericDiff
 

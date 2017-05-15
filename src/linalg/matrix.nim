@@ -17,13 +17,13 @@ proc newMat*[T](row, col: int): Matrix[T] {.noSideEffect.} =
   result.col = col
   result.elm = newSeq[T](row*col)
 
-proc newMat*[T](row, col: int; elm: seq[T]): Matrix[T] {.noSideEffect.} =
+proc newMat*[T](row, col: int, elm: seq[T]): Matrix[T] {.noSideEffect.} =
   new(result)
   result.row = row
   result.col = col
   result.elm = elm
 
-proc newMatRandom*[T](row, col: int; min, max: T): Matrix[T] =
+proc newMatRandom*[T](row, col: int, min, max: T): Matrix[T] =
   # [min, max)
   new(result)
   result.row = row
@@ -33,14 +33,14 @@ proc newMatRandom*[T](row, col: int; min, max: T): Matrix[T] =
     elm.add random(max - min) + min
   result.elm = elm
 
-proc at*[T](self: Matrix[T]; i, j: int): T {.inline, deprecated.} = self.elm[i*self.col + j]
+proc at*[T](self: Matrix[T], i, j: int): T {.inline, deprecated.} = self.elm[i*self.col + j]
 
-proc `[]`*[T](self: Matrix[T]; i, j: int): T {.inline, noSideEffect.} = self.elm[i*self.col + j]
+proc `[]`*[T](self: Matrix[T], i, j: int): T {.inline, noSideEffect.} = self.elm[i*self.col + j]
 
-proc setAt*[T](self: var Matrix[T]; i, j: int, val: T) {.inline, deprecated.} =
+proc setAt*[T](self: var Matrix[T], i, j: int, val: T) {.inline, deprecated.} =
   self.elm[i*self.col + j] = val
 
-proc `[]=`*[T](self: var Matrix[T]; i, j: int, val: T) {.inline.} =
+proc `[]=`*[T](self: var Matrix[T], i, j: int, val: T) {.inline.} =
   self.elm[i*self.col + j] = val
 
 proc `==`*[T](x, y: var Matrix[T]): bool =
@@ -163,7 +163,7 @@ proc transform*[T, S](self: Matrix[T], f: (T, int, int) -> S): Matrix[S] {.noSid
 proc transform*[T, S](self: Matrix[T], f: T -> S): Matrix[S] {.noSideEffect.} =
   self.transform((val: T, row, col) => f(val))
 
-proc slice*[T](self: Matrix[T]; lb, ub: int): Matrix[T] {.noSideEffect.} =
+proc slice*[T](self: Matrix[T], lb, ub: int): Matrix[T] {.noSideEffect.} =
   # [lb, ub]
   result = newMat[T](ub - lb + 1, self.col)
   var pos = 0
