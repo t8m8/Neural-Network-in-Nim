@@ -93,8 +93,8 @@ proc runBatch(self: var Network, input, expected: Matrix[NNFloat], options: Opti
     var
       (idx, grad) = (item.idx, item.grad)
       links = Links(self.layers[idx])
-      weights = links.weights.transform((val: NNFloat) => val / input.row.NNFloat)
-    self.optimizer.update(weights, grad)
+      normalizedGrad = grad.transform((val: NNFloat) => val / input.row.NNFloat)
+    self.optimizer.update(links.weights, normalizedGrad)
   let loss = self.lossFromProbs(outputs.last, expected)
   let (hit, miss) = self.hitMissCntFromProbs(outputs.last, expected)
   result = (hit, miss, loss)
@@ -139,4 +139,3 @@ proc checkGradient*(self: var Network, input, expected: Matrix[NNFloat], grads: 
         links.weights[i, j] = x
         let numericDiff = (fx2 - fx1) / (2.0 * h)
         assert abs(grad[i, j] -  numericDiff) <= 1e-6, $grad[i, j] & " " & $numericDiff
-

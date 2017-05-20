@@ -11,9 +11,9 @@ proc genXorData(n: int): tuple[input: Matrix[float], output: Matrix[float]] =
 
 when isMainModule:
   var network = newNNBuilder()
-    .add(newDense(2, 3))
+    .add(newDense(2, 10))
     .add(newSigmoid())
-    .add(newDense(3, 1))
+    .add(newDense(10, 1))
     .add(newSigmoid())
     .minimize(newBinaryCrossEntropy())
     .optimize(newSGD(0.1))
