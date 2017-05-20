@@ -1,6 +1,8 @@
 import nnenv
 import "../utils/mysequtils"
 
+import strutils, terminal
+
 type
   TrResults* = ref object of RootObj
     totalCount*: int
@@ -51,18 +53,24 @@ method batchEnd*(self: Formatter, res: TrResults) {.base.} =
     else: bar &= " "
 
   let per = res.currentCount * 100 / res.totalCount
-  echo $res.currentCount & " / " & $res.totalCount & " (" & $per & "%)\n" &
-    "[" & bar & "]"
+  var outstr = $res.currentCount & " / " & $res.totalCount & " (" & $per & "%)\n" &
+    "[" & bar & "]\n"
   for m in self.measures:
-    echo $m & " = " & $m.compute(res)
+    outstr &= $m & " = " & $m.compute(res) & "\n"
+
+  stdout.write outstr
+  for i in 0..<outstr.countLines:
+    stdout.cursorUp()
+    stdout.eraseLine()
 
 method epochStart*(self: Formatter, currentEpoch, totalEpochs: int) {.base.} =
   if not self.flag: return
-  echo "Training epoch " & $currentEpoch & " / " & $totalEpochs
+  stdout.write "Training epoch " & $currentEpoch & " / " & $totalEpochs & "\n"
 
 method epochEnd*(self: Formatter, currentEpoch, totalEpochs: int) {.base.} =
   if not self.flag: return
-  echo ""
+  stdout.cursorUp()
+  stdout.eraseLine()
 
 proc newAccuracy*(): Accuracy =
   new(result)
