@@ -13,7 +13,8 @@ type
     lossfunc: LossFunc
     optimizer: Optimizer
 
-proc newNetwork*(layers: seq[Layer], lossfunc: LossFunc, optimizer: Optimizer): Network =
+proc newNetwork*(layers: seq[Layer], lossfunc: LossFunc, optimizer: Optimizer):
+    Network =
   new(result)
   result.layers = layers
   result.lossfunc = lossfunc
@@ -29,7 +30,8 @@ proc weights*(self: Network, idx: int): Matrix[NNFloat] =
   else:
     result = nil
 
-proc update(self: var Network, res: TrResults, cnt, hit, miss: int, loss: NNFloat) =
+proc update(self: var Network, res: TrResults, cnt, hit, miss: int,
+    loss: NNFloat) =
   res.currentCount += cnt
   res.hitCount += hit
   res.missCount += miss
@@ -45,20 +47,24 @@ proc predict*(self: var Network, input: Matrix[NNFloat]): Matrix[int] =
   var probs = self.probs(input)
   result = self.lossfunc.predictFromProbs(probs)
 
-proc lossFromProbs(self: var Network, predictions, expected: Matrix[NNFloat]): NNFloat =
-  self.lossfunc.loss(predictions, expected).reduce(0.0, (acc, val: NNFloat) => acc + val)
+proc lossFromProbs(self: var Network, predictions, expected: Matrix[NNFloat]):
+    NNFloat =
+  self.lossfunc.loss(predictions, expected).reduce(0.0,
+      (acc, val: NNFloat) => acc + val)
 
 proc loss*(self: var Network, input, expected: Matrix[NNFloat]): NNFloat =
   var probs = self.probs(input)
   self.lossFromProbs(probs, expected)
 
-proc hitMissCntFromProbs(self: var Network, probs, expected: Matrix[NNFloat]): tuple[hit, miss: int] =
+proc hitMissCntFromProbs(self: var Network, probs, expected: Matrix[NNFloat]):
+    tuple[hit, miss: int] =
   var
     probNorm = self.lossfunc.predictFromProbs(probs)
     expectedNorm = self.lossfunc.predictFromProbs(expected)
   result = probNorm.reduce(
     (0, 0),
-    proc(acc: tuple[hit, miss: int], val: int, row, col: int): tuple[hit, miss: int] =
+    proc(acc: tuple[hit, miss: int], val: int, row, col: int):
+        tuple[hit, miss: int] =
       if expectedNorm[row, 0] == val:
         result = (acc.hit + 1, acc.miss)
       else:
@@ -72,7 +78,8 @@ proc forward*(self: var Network, input: Matrix[NNFloat]): seq[Matrix[NNFloat]] =
     outputs.add(self.layers[i].forward(outputs.last))
   result = outputs
 
-proc backward*(self: var Network, outputs: seq[Matrix[NNFloat]], expected: Matrix[NNFloat]): seq[tuple[idx: int, grad: Matrix[NNFloat]]] =
+proc backward*(self: var Network, outputs: seq[Matrix[NNFloat]],
+    expected: Matrix[NNFloat]): seq[tuple[idx: int, grad: Matrix[NNFloat]]] =
   var
     grads = newSeq[tuple[idx: int, grad: Matrix[NNFloat]]]()
     localGrads = @[self.lossfunc.backward(outputs.last, expected)]
@@ -84,9 +91,11 @@ proc backward*(self: var Network, outputs: seq[Matrix[NNFloat]], expected: Matri
     localGrads.add(localGrad)
   result = grads
 
-proc checkGradient*(self: var Network, input, expected: Matrix[NNFloat], grads: seq[tuple[idx: int, grad: Matrix[NNFloat]]], options: Options)
+proc checkGradient*(self: var Network, input, expected: Matrix[NNFloat],
+    grads: seq[tuple[idx: int, grad: Matrix[NNFloat]]], options: Options)
 
-proc runBatch(self: var Network, input, expected: Matrix[NNFloat], options: Options): tuple[hit, miss: int, loss: NNFloat] =
+proc runBatch(self: var Network, input, expected: Matrix[NNFloat],
+    options: Options): tuple[hit, miss: int, loss: NNFloat] =
   var outputs = self.forward(input)
   let grads = self.backward(outputs, expected)
   for item in grads:
@@ -100,7 +109,8 @@ proc runBatch(self: var Network, input, expected: Matrix[NNFloat], options: Opti
   result = (hit, miss, loss)
   when DEBUG: self.checkGradient(input, expected, grads, options)
 
-proc runEpoch(self: var Network, input, expected: Matrix[NNFloat], options: Options) =
+proc runEpoch(self: var Network, input, expected: Matrix[NNFloat],
+    options: Options) =
   let batches: int = (input.row + options.batchSize - 1) div options.batchSize
   var res = TrResults(totalCount: input.row)
   for i in 0..<batches:
@@ -114,14 +124,15 @@ proc runEpoch(self: var Network, input, expected: Matrix[NNFloat], options: Opti
     self.update(res, (ub - lb + 1), hit, miss, loss)
     options.formatter.batchEnd(res)
 
-proc train*(self: var Network, input, expected: Matrix[NNFloat], options: Options) =
+proc train*(self: var Network, input, expected: Matrix[NNFloat],
+    options: Options) =
   for i in 1..options.epochs:
     options.formatter.epochStart(i, options.epochs)
     self.runEpoch(input, expected, options)
     options.formatter.epochEnd(i, options.epochs)
 
-
-proc checkGradient*(self: var Network, input, expected: Matrix[NNFloat], grads: seq[tuple[idx: int, grad: Matrix[NNFloat]]], options: Options) =
+proc checkGradient*(self: var Network, input, expected: Matrix[NNFloat],
+    grads: seq[tuple[idx: int, grad: Matrix[NNFloat]]], options: Options) =
   const h = 1e-4
   options.formatter.off
   defer: options.formatter.on
@@ -138,4 +149,4 @@ proc checkGradient*(self: var Network, input, expected: Matrix[NNFloat], grads: 
         let fx2 = self.loss(input, expected)
         links.weights[i, j] = x
         let numericDiff = (fx2 - fx1) / (2.0 * h)
-        assert abs(grad[i, j] -  numericDiff) <= 1e-6, $grad[i, j] & " " & $numericDiff
+        assert abs(grad[i, j] -  numericDiff) <= 1e-6
