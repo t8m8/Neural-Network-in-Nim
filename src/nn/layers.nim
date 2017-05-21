@@ -11,6 +11,7 @@ type
   Identity = ref object of Activation
   Sigmoid = ref object of Activation
   ReLU = ref object of Activation
+  Softmax = ref object of Activation
 
   Links* = ref object of Layer
     inputDim*: int
@@ -70,6 +71,27 @@ method forward*(self: ReLU, incoming: Matrix[NNFloat]):
 method backward*(self: ReLU, outgoing: Matrix[NNFloat],
     above: Matrix[NNFloat]): Matrix[NNFloat] {.noSideEffect.} =
   outgoing.transform((val: NNFloat) => ord(val > 0).NNFloat)
+
+# ==============================================================================
+
+proc newSoftmax*(): Softmax {.noSideEffect.} =
+  new(result)
+
+method forward*(self: Softmax, incoming: Matrix[NNFloat]):
+    Matrix[NNFloat] {.noSideEffect.} =
+  let
+    maxes = incoming.reduceRows(0.0, (acc, val) => max(acc, val))
+    exps = incoming.transform((val, row, _) => exp(val - maxes[row, 0]))
+    sums = exps.reduceRows(0.0, (acc, val) => acc + val)
+  result = exps.transform((val, row, _) => val / sums[row, 0])
+
+method backward*(self: Softmax, outgoing: Matrix[NNFloat],
+    above: Matrix[NNFloat]): Matrix[NNFloat] {.noSideEffect.} =
+  let
+    delta = outgoing * above
+    sums = delta.reduceRows(0.0, (acc, val) => acc + val)
+  result = delta.transform(
+      (val, row, col) => val - outgoing[row, col] * sums[row, 0])
 
 # ==============================================================================
 
