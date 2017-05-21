@@ -1,13 +1,15 @@
 import unittest
 import nn
 
+import sequtils
+
 suite "matrix":
 
   test "newMat":
     var mat = newMat[float](2, 3)
     check(mat.row == 2)
     check(mat.col == 3)
-  
+
   test "newMat elm":
     var
       elm = @[1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
@@ -25,7 +27,7 @@ suite "matrix":
     for i in 0..<mat.row:
       for j in 0..<mat.col:
         check(min <= mat[i, j] and mat[i, j] < max)
-    
+
   test "newMatRandom float":
     var
       (min, max) = (-100.0, 100.0)
@@ -33,7 +35,16 @@ suite "matrix":
     for i in 0..<mat.row:
       for j in 0..<mat.col:
         check(min <= mat[i, j] and mat[i, j] < max)
-      
+
+  test "operator []=":
+    var
+      vec = @[1.0, 2.0, 3.0, 4.0, 5.0]
+      mat = newMat[float](3, 5)
+      ans = newMat[float](3, 5, sequtils.cycle(vec, 3))
+    for i in 0..2:
+      mat[i] = vec
+    check(mat == ans)
+
   test "operator ==":
     var
       x = newMat[float](2, 2, @[1.0, 2.0, 3.0, 4.0])
@@ -43,7 +54,7 @@ suite "matrix":
     check(x == y1)
     check(x != y2)
     check(x != y3)
-  
+
   test "operator *":
     var
       x = newMat[float](2, 2, @[1.0, -1.0, -2.0, 3.0])

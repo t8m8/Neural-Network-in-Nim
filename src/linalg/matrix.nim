@@ -43,6 +43,10 @@ proc setAt*[T](self: var Matrix[T], i, j: int, val: T) {.inline, deprecated.} =
 proc `[]=`*[T](self: var Matrix[T], i, j: int, val: T) {.inline.} =
   self.elm[i*self.col + j] = val
 
+proc `[]=`*[T](self: var Matrix[T], i: int, val: seq[T]) {.inline.} =
+  for j in 0..<val.len:
+    self[i, j] = val[j]
+
 proc `==`*[T](x, y: var Matrix[T]): bool =
   if x.row != y.row or x.col != y.col:
     return false
