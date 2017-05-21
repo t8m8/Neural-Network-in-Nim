@@ -28,6 +28,8 @@ method `$`*(self: Measure): string {.base.} =
 method compute*(self: Measure, res: TrResults): NNFloat {.base.} =
   assert false
 
+# ==============================================================================
+
 proc newFormatter*(): Formatter =
   new(result)
   result.measures = @[]
@@ -53,8 +55,8 @@ method batchEnd*(self: Formatter, res: TrResults) {.base.} =
     else: bar &= " "
 
   let per = res.currentCount * 100 / res.totalCount
-  var outstr = $res.currentCount & " / " & $res.totalCount & " (" & $per & "%)\n" &
-    "[" & bar & "]\n"
+  var outstr = $res.currentCount & " / " & $res.totalCount &
+      " (" & $per & "%)\n" & "[" & bar & "]\n"
   for m in self.measures:
     outstr &= $m & " = " & $m.compute(res) & "\n"
 
@@ -71,6 +73,8 @@ method epochEnd*(self: Formatter, currentEpoch, totalEpochs: int) {.base.} =
   if not self.flag: return
   stdout.cursorUp()
   stdout.eraseLine()
+
+# ==============================================================================
 
 proc newAccuracy*(): Accuracy =
   new(result)
