@@ -1,16 +1,12 @@
 import nn
 import random
 
-proc oneHot(n, idx: int): seq[float] =
-  result = newSeq[float](n)
-  result[idx] = 1
-
 proc genXorData(n: int): tuple[input: Matrix[float], output: Matrix[float]] =
   var (input, output) = (newMat[float](n, 2), newMat[float](n, 2))
   for i in 0..<n:
     input[i, 0] = random(2).float
     input[i, 1] = random(2).float
-    output[i] = oneHot(2, input[i, 0].int xor input[i, 1].int)
+    output[i] = oneHot[float](2, input[i, 0].int xor input[i, 1].int)
   result = (input, output)
 
 when isMainModule:
