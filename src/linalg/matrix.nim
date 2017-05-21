@@ -9,7 +9,8 @@ type
 const EPS = 1e-8
 
 proc `$`*[T](self: Matrix[T]): string {.noSideEffect.} =
-  "Matrix[" & T.type.name & "]{row: " & $self.row & ", col: " & $self.col & ", elm: " & $self.elm & "}"
+  "Matrix[" & T.type.name & "]{row: " & $self.row & ", col: " &
+      $self.col & ", elm: " & $self.elm & "}"
 
 proc newMat*[T](row, col: int): Matrix[T] {.noSideEffect.} =
   new(result)
@@ -33,12 +34,8 @@ proc newMatRandom*[T](row, col: int, min, max: T): Matrix[T] =
     elm.add random(max - min) + min
   result.elm = elm
 
-proc at*[T](self: Matrix[T], i, j: int): T {.inline, deprecated.} = self.elm[i*self.col + j]
-
-proc `[]`*[T](self: Matrix[T], i, j: int): T {.inline, noSideEffect.} = self.elm[i*self.col + j]
-
-proc setAt*[T](self: var Matrix[T], i, j: int, val: T) {.inline, deprecated.} =
-  self.elm[i*self.col + j] = val
+proc `[]`*[T](self: Matrix[T], i, j: int): T {.inline, noSideEffect.} =
+  self.elm[i*self.col + j]
 
 proc `[]=`*[T](self: var Matrix[T], i, j: int, val: T) {.inline.} =
   self.elm[i*self.col + j] = val
@@ -139,26 +136,31 @@ proc t*[T](self: Matrix[T]): Matrix[T] {.noSideEffect.} =
     for j in 0..<self.col:
       result[j,i] = self[i,j]
 
-proc reduce*[T, S](self: Matrix[T], init: S, f: (S, T, int, int) -> S): S {.noSideEffect.} =
+proc reduce*[T, S](self: Matrix[T], init: S, f: (S, T, int, int) -> S):
+    S {.noSideEffect.} =
   result = init
   for i in 0..<self.row:
     for j in 0..<self.col:
       result = f(result, self[i,j], i, j)
 
-proc reduce*[T, S](self: Matrix[T], init: S, f: (S, T) -> S): S {.noSideEffect.} =
+proc reduce*[T, S](self: Matrix[T], init: S, f: (S, T) -> S):
+    S {.noSideEffect.} =
   self.reduce(init, (acc: S, val: T, row, col) => f(acc, val))
 
-proc reduceRows*[T, S](self: Matrix[T], init: S, f: (S, T, int, int) -> S): Matrix[S] {.noSideEffect.} =
+proc reduceRows*[T, S](self: Matrix[T], init: S, f: (S, T, int, int) -> S):
+    Matrix[S] {.noSideEffect.} =
   result = newMat[S](self.row, 1)
   for i in 0..<self.row:
     result[i,0] = init
     for j in 0..<self.col:
       result[i,0] = f(result[i,0], self[i,j], i, j)
 
-proc reduceRows*[T, S](self: Matrix[T], init: S, f: (S, T) -> S): Matrix[S] {.noSideEffect.} =
+proc reduceRows*[T, S](self: Matrix[T], init: S, f: (S, T) -> S):
+    Matrix[S] {.noSideEffect.} =
   self.reduceRows(init, (acc: S, val: T, row, col) => f(acc, val))
 
-proc transform*[T, S](self: Matrix[T], f: (T, int, int) -> S): Matrix[S] {.noSideEffect.} =
+proc transform*[T, S](self: Matrix[T], f: (T, int, int) -> S):
+    Matrix[S] {.noSideEffect.} =
   result = newMat[S](self.row, self.col)
   for i in 0..<self.row:
     for j in 0..<self.col:
