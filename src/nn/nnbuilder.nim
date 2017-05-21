@@ -26,7 +26,8 @@ proc minimize*(self: NNBuilder, lossfunc: LossFunc): NNBuilderWithLossFunc =
   result.layers = self.layers
   result.lossfunc = lossfunc
 
-proc optimize*(self: NNBuilderWithLossFunc, optimizer: Optimizer): NNBuilderWithOptimizer =
+proc optimize*(self: NNBuilderWithLossFunc, optimizer: Optimizer):
+    NNBuilderWithOptimizer =
   new(result)
   result.layers = self.layers
   result.lossfunc = self.lossfunc
