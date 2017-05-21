@@ -71,18 +71,18 @@ proc `[]=`*[T](self: var Matrix[T], i: int, val: seq[T]) {.inline.} =
 proc `==`*[T](x, y: Matrix[T]): bool =
   if x.row != y.row or x.col != y.col:
     return false
-  else:
-    for i in 0..<x.elm.len:
-      if x.elm[i] != y.elm[i]:
+  for i in 0..<x.row:
+    for j in 0..<x.col:
+      if x[i, j] != y[i, j]:
         return false
   true
 
 proc `~=`*[T](x, y: Matrix[T]): bool =
   if x.row != y.row or x.col != y.col:
     return false
-  else:
-    for i in 0..<x.elm.len:
-      if abs(x.elm[i] - y.elm[i]) > EPS:
+  for i in 0..<x.row:
+    for j in 0..<x.col:
+      if abs(x[i, j] - y[i, j]) > EPS:
         return false
   true
 
