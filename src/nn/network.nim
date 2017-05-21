@@ -39,22 +39,28 @@ proc update(self: var Network, res: TrResults, cnt, hit, miss: int,
 
 proc forward*(self: var Network, input: Matrix[NNFloat]): seq[Matrix[NNFloat]]
 
-proc probs(self: var Network, input: Matrix[NNFloat]): Matrix[NNFloat] =
-  var output = self.forward(input).last
-  result = output
+proc probs*(self: var Network, input: Matrix[NNFloat]): Matrix[NNFloat] =
+  result = self.forward(input).last
 
 proc predict*(self: var Network, input: Matrix[NNFloat]): Matrix[int] =
-  var probs = self.probs(input)
+  let probs = self.probs(input)
   result = self.lossfunc.predictFromProbs(probs)
 
-proc lossFromProbs(self: var Network, predictions, expected: Matrix[NNFloat]):
+proc lossFromProbs*(self: var Network, probs, expected: Matrix[NNFloat]):
     NNFloat =
-  self.lossfunc.loss(predictions, expected).reduce(0.0,
+  self.lossfunc.loss(probs, expected).reduce(0.0,
       (acc, val: NNFloat) => acc + val)
 
 proc loss*(self: var Network, input, expected: Matrix[NNFloat]): NNFloat =
-  var probs = self.probs(input)
+  let probs = self.probs(input)
   self.lossFromProbs(probs, expected)
+
+proc meanLossFromProbs*(self: var Network,
+    probs, expected: Matrix[NNFloat]): NNFloat =
+  self.lossFromProbs(probs, expected) / probs.row.NNFloat
+
+proc meanLoss*(self: var Network, input, expected: Matrix[NNFloat]): NNFloat =
+  self.loss(input, expected) / input.row.NNFloat
 
 proc hitMissCntFromProbs(self: var Network, probs, expected: Matrix[NNFloat]):
     tuple[hit, miss: int] =
@@ -70,6 +76,16 @@ proc hitMissCntFromProbs(self: var Network, probs, expected: Matrix[NNFloat]):
       else:
         result = (acc.hit, acc.miss + 1)
   )
+
+proc accuracyFromProbs*(self: var Network, probs, expected: Matrix[NNFloat]):
+    NNFloat =
+  let (hit, miss) = self.hitMissCntFromProbs(probs, expected)
+  result = hit.NNFloat / (hit + miss).NNFloat
+
+proc accuracy*(self: var Network, input, expected: Matrix[NNFloat]):
+    NNFloat =
+  let probs = self.probs(input)
+  self.accuracyFromProbs(probs, expected)
 
 proc forward*(self: var Network, input: Matrix[NNFloat]): seq[Matrix[NNFloat]] =
   var outputs = newSeq[Matrix[NNFloat]]()
