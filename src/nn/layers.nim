@@ -95,7 +95,7 @@ method backward*(self: Softmax, outgoing: Matrix[NNFloat],
 
 # ==============================================================================
 
-proc newDense*(inputDim, outputDim: int, eps: NNFloat = 1e-4): Dense =
+proc newDense*(inputDim, outputDim: int): Dense =
   new(result)
   let d = 1.0 / inputDim.NNFloat
   result.inputDim = inputDim

@@ -165,4 +165,4 @@ proc checkGradient*(self: var Network, input, expected: Matrix[NNFloat],
         let fx2 = self.loss(input, expected)
         links.weights[i, j] = x
         let numericDiff = (fx2 - fx1) / (2.0 * h)
-        assert abs(grad[i, j] -  numericDiff) <= 1e-6
+        assert abs(grad[i, j] -  numericDiff) / max(grad[i, j], numericDiff) <= 1e-6

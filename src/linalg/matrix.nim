@@ -2,9 +2,10 @@ import random, typetraits, sequtils, future
 
 type
   Matrix*[T] = ref object of RootObj
-    col*: int
     row*: int
+    col*: int
     elm: seq[T]
+    rowMajor: bool
 
 const EPS = 1e-8
 
@@ -16,12 +17,28 @@ proc newMat*[T](row, col: int): Matrix[T] {.noSideEffect.} =
   new(result)
   result.row = row
   result.col = col
+  result.rowMajor = true
+  result.elm = newSeq[T](row*col)
+
+proc newMat*[T](row, col: int, rowMajor: bool): Matrix[T] {.noSideEffect.} =
+  new(result)
+  result.row = row
+  result.col = col
+  result.rowMajor = rowMajor
   result.elm = newSeq[T](row*col)
 
 proc newMat*[T](row, col: int, elm: seq[T]): Matrix[T] {.noSideEffect.} =
   new(result)
   result.row = row
   result.col = col
+  result.rowMajor = true
+  result.elm = elm
+
+proc newMat*[T](row, col: int, elm: seq[T], rowMajor: bool): Matrix[T] {.noSideEffect.} =
+  new(result)
+  result.row = row
+  result.col = col
+  result.rowMajor = rowMajor
   result.elm = elm
 
 proc newMatRandom*[T](row, col: int, min, max: T): Matrix[T] =
@@ -29,22 +46,29 @@ proc newMatRandom*[T](row, col: int, min, max: T): Matrix[T] =
   new(result)
   result.row = row
   result.col = col
+  result.rowMajor = true
   var elm: seq[T] = @[]
   for i in 0..<row*col:
     elm.add random(max - min) + min
   result.elm = elm
 
 proc `[]`*[T](self: Matrix[T], i, j: int): T {.inline, noSideEffect.} =
-  self.elm[i*self.col + j]
+  if self.rowMajor:
+    self.elm[i*self.col + j]
+  else:
+    self.elm[i + j*self.row]
 
 proc `[]=`*[T](self: var Matrix[T], i, j: int, val: T) {.inline.} =
-  self.elm[i*self.col + j] = val
+  if self.rowMajor:
+    self.elm[i*self.col + j] = val
+  else:
+    self.elm[i + j*self.row] = val
 
 proc `[]=`*[T](self: var Matrix[T], i: int, val: seq[T]) {.inline.} =
   for j in 0..<val.len:
     self[i, j] = val[j]
 
-proc `==`*[T](x, y: var Matrix[T]): bool =
+proc `==`*[T](x, y: Matrix[T]): bool =
   if x.row != y.row or x.col != y.col:
     return false
   else:
@@ -53,7 +77,7 @@ proc `==`*[T](x, y: var Matrix[T]): bool =
         return false
   true
 
-proc `~=`*[T](x, y: var Matrix[T]): bool =
+proc `~=`*[T](x, y: Matrix[T]): bool =
   if x.row != y.row or x.col != y.col:
     return false
   else:
@@ -131,10 +155,7 @@ proc map*[T](self: Matrix[T], f: T -> T): Matrix[T] {.noSideEffect.} =
   result.elm = self.elm.map(f)
 
 proc t*[T](self: Matrix[T]): Matrix[T] {.noSideEffect.} =
-  result = newMat[T](self.col, self.row)
-  for i in 0..<self.row:
-    for j in 0..<self.col:
-      result[j,i] = self[i,j]
+  result = newMat[T](self.col, self.row, self.elm, not self.rowMajor)
 
 proc reduce*[T, S](self: Matrix[T], init: S, f: (S, T, int, int) -> S):
     S {.noSideEffect.} =
@@ -149,7 +170,7 @@ proc reduce*[T, S](self: Matrix[T], init: S, f: (S, T) -> S):
 
 proc reduceRows*[T, S](self: Matrix[T], init: S, f: (S, T, int, int) -> S):
     Matrix[S] {.noSideEffect.} =
-  result = newMat[S](self.row, 1)
+  result = newMat[S](self.row, 1, self.rowMajor)
   for i in 0..<self.row:
     result[i,0] = init
     for j in 0..<self.col:
@@ -171,7 +192,7 @@ proc transform*[T, S](self: Matrix[T], f: T -> S): Matrix[S] {.noSideEffect.} =
 
 proc slice*[T](self: Matrix[T], lb, ub: int): Matrix[T] {.noSideEffect.} =
   # [lb, ub]
-  result = newMat[T](ub - lb + 1, self.col)
+  result = newMat[T](ub - lb + 1, self.col, self.rowMajor)
   var pos = 0
   for i in lb..ub:
     for j in 0..<self.col:
