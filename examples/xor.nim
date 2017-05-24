@@ -1,7 +1,7 @@
 import nn
 import random
 
-proc genXorData(n: int): tuple[input: Matrix[float], output: Matrix[float]] =
+proc genXorData(n: int): (Matrix[float], Matrix[float]) =
   var (input, output) = (newMat[float](n, 2), newMat[float](n, 2))
   for i in 0..<n:
     input[i, 0] = random(2).float
