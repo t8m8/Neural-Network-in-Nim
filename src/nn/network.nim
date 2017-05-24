@@ -63,14 +63,14 @@ proc meanLoss*(self: var Network, input, expected: Matrix[NNFloat]): NNFloat =
   self.loss(input, expected) / input.row.NNFloat
 
 proc hitMissCntFromProbs(self: var Network, probs, expected: Matrix[NNFloat]):
-    tuple[hit, miss: int] =
+    (int, int) =
   var
     probNorm = self.lossfunc.predictFromProbs(probs)
     expectedNorm = self.lossfunc.predictFromProbs(expected)
   result = probNorm.reduce(
     (0, 0),
     proc(acc: tuple[hit, miss: int], val: int, row, col: int):
-        tuple[hit, miss: int] =
+        (int, int) =
       if expectedNorm[row, 0] == val:
         result = (acc.hit + 1, acc.miss)
       else:
@@ -97,7 +97,7 @@ proc forward*(self: var Network, input: Matrix[NNFloat]): seq[Matrix[NNFloat]] =
 proc backward*(self: var Network, outputs: seq[Matrix[NNFloat]],
     expected: Matrix[NNFloat]): seq[tuple[idx: int, grad: Matrix[NNFloat]]] =
   var
-    grads = newSeq[tuple[idx: int, grad: Matrix[NNFloat]]]()
+    grads = newSeq[(int, Matrix[NNFloat])]()
     localGrads = @[self.lossfunc.backward(outputs.last, expected)]
   for i in countDown(self.layers.len-2, 1):
     if self.layers[i] of Links:
@@ -111,7 +111,7 @@ proc checkGradient*(self: var Network, input, expected: Matrix[NNFloat],
     grads: seq[tuple[idx: int, grad: Matrix[NNFloat]]], options: Options)
 
 proc runBatch(self: var Network, input, expected: Matrix[NNFloat],
-    options: Options): tuple[hit, miss: int, loss: NNFloat] =
+    options: Options): (int, int, NNFloat) =
   var outputs = self.forward(input)
   let grads = self.backward(outputs, expected)
   for item in grads:
