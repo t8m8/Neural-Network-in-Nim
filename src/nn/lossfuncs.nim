@@ -30,10 +30,7 @@ method loss*(self: CrossEntropy, output: Matrix[NNFloat],
     expected: Matrix[NNFloat]): Matrix[NNFloat] {.noSideEffect.} =
   result = output.reduceRows(0.0, proc(acc, val: NNFloat, row, col: int):
       NNFloat =
-    if expected[row, col] > 0.0:
-      acc - ln(val)
-    else:
-      acc
+    acc - expected[row, col]*ln(val)
   )
 
 method backward*(self: CrossEntropy, output: Matrix[NNFloat],
@@ -45,7 +42,7 @@ method predictFromProbs*(self: CrossEntropy, probs: Matrix[NNFloat]):
   result = probs.reduceRows(
     (0.0, 0),
     proc(acc: tuple[max: NNFloat, maxIdx: int], val: NNFloat, row, col: int):
-        tuple[max: NNFloat, maxIdx: int] =
+        (NNFloat, int) =
       if val > acc.max:
         result = (val, col)
       else:

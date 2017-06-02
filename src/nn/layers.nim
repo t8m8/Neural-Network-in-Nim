@@ -70,7 +70,10 @@ method forward*(self: ReLU, incoming: Matrix[NNFloat]):
 
 method backward*(self: ReLU, outgoing: Matrix[NNFloat],
     above: Matrix[NNFloat]): Matrix[NNFloat] {.noSideEffect.} =
-  outgoing.transform((val: NNFloat) => ord(val > 0).NNFloat)
+  outgoing.transform(proc(val: NNFloat, row, col: int): NNFloat =
+    if val > 0: above[row, col]
+    else: 0
+  )
 
 # ==============================================================================
 
