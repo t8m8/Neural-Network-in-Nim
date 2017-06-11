@@ -9,15 +9,14 @@ proc genXorData(n: int): (Matrix[float], Matrix[float]) =
     output[i] = oneHot[float](2, input[i, 0].int xor input[i, 1].int)
   result = (input, output)
 
-when isMainModule:
-  var network = newNNBuilder()
-    .add(newDense(2, 10))
-    .add(newSigmoid())
-    .add(newDense(10, 2))
-    .add(newSoftmax())
-    .minimize(newCrossEntropy())
-    .optimize(newSGD(0.1))
-    .build()
+network:
+  layers:
+    Dense[2, 10]
+    Sigmoid
+    Dense[10, 2]
+    Softmax
+  minimize: CrossEntropy
+  optimize: SGD(0.1)
 
   var
     (trainInput, trainOutput) = genXorData(1000000)
@@ -37,4 +36,3 @@ when isMainModule:
 
   for i in 0..<testInput.row:
     echo $testInput[i,0] & " xor " & $testInput[i,1] & " = " & $res[i,0]
-

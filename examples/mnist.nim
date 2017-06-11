@@ -24,18 +24,16 @@ proc loadLabels(fname: string, size: int): Matrix[float] =
     pos.inc()
   result = labels
 
-when isMainModule:
-
-  var network = newNNBuilder()
-    .add(newDense(28 * 28, 128))
-    .add(newReLU())
-    .add(newDense(128, 128))
-    .add(newReLU())
-    .add(newDense(128, 10))
-    .add(newSoftmax())
-    .minimize(newCrossEntropy())
-    .optimize(newSGD(0.5))
-    .build()
+network:
+  layers:
+    Dense[28 * 28, 128]
+    ReLU
+    Dense[128, 128]
+    ReLU
+    Dense[128, 10]
+    Softmax
+  minimize: CrossEntropy
+  optimize: SGD(0.5)
 
   echo "loading training data..."
   var
