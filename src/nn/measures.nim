@@ -1,4 +1,3 @@
-import nnenv
 import "../utils/mysequtils"
 
 import strutils, terminal
@@ -7,7 +6,7 @@ type
   TrResults* = ref object of RootObj
     totalCount*: int
     currentCount*: int
-    totalLoss*: NNFloat
+    totalLoss*: float64
     hitCount*: int
     missCount*: int
 
@@ -25,7 +24,7 @@ type
 method `$`*(self: Measure): string {.base.} =
   assert false
 
-method compute*(self: Measure, res: TrResults): NNFloat {.base.} =
+method compute*(self: Measure, res: TrResults): float64 {.base.} =
   assert false
 
 # ==============================================================================
@@ -51,7 +50,7 @@ method batchEnd*(self: Formatter, res: TrResults) {.base.} =
     progress = res.currentCount * self.progressWidth / res.totalCount
     bar = ""
   for i in 0..self.progressWidth:
-    if i.NNFloat <= progress: bar &= "#"
+    if i.float64 <= progress: bar &= "#"
     else: bar &= " "
 
   let per = res.currentCount * 100 / res.totalCount
@@ -79,15 +78,15 @@ method epochEnd*(self: Formatter, currentEpoch, totalEpochs: int) {.base.} =
 proc newAccuracy*(): Accuracy =
   new(result)
 
-method compute*(self: Accuracy, res: TrResults): NNFloat {.noSideEffect.} =
-  res.hitCount.NNFloat / res.currentCount.NNFloat
+method compute*(self: Accuracy, res: TrResults): float64 {.noSideEffect.} =
+  res.hitCount.float64 / res.currentCount.float64
 
 method `$`*(self: Accuracy): string {.noSideEffect.} = "accuracy"
 
 proc newMeanLoss*(): MeanLoss =
   new(result)
 
-method compute*(self: MeanLoss, res: TrResults): NNFloat {.noSideEffect.} =
-  res.totalLoss / res.currentCount.NNFloat
+method compute*(self: MeanLoss, res: TrResults): float64 {.noSideEffect.} =
+  res.totalLoss / res.currentCount.float64
 
 method `$`*(self: MeanLoss): string {.noSideEffect.} = "mean loss"

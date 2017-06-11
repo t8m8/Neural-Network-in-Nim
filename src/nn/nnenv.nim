@@ -1,2 +1,0 @@
-type
-  NNFloat* = float64

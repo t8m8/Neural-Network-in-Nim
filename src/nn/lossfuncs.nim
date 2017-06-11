@@ -1,4 +1,3 @@
-import nnenv
 import "../linalg/matrix"
 
 import math, future
@@ -9,15 +8,15 @@ type
   CrossEntropy = ref object of LossFunc
   BinaryCrossEntropy = ref object of LossFunc
 
-method loss*(self: LossFunc, output: Matrix[NNFloat],
-    expected: Matrix[NNFloat]): Matrix[NNFloat] {.base.} =
+method loss*(self: LossFunc, output: Matrix[float64],
+    expected: Matrix[float64]): Matrix[float64] {.base.} =
   assert false
 
-method backward*(self: LossFunc, output: Matrix[NNFloat],
-    expected: Matrix[NNFloat]): Matrix[NNFloat] {.base.} =
+method backward*(self: LossFunc, output: Matrix[float64],
+    expected: Matrix[float64]): Matrix[float64] {.base.} =
   assert false
 
-method predictFromProbs*(self: LossFunc, probs: Matrix[NNFloat]):
+method predictFromProbs*(self: LossFunc, probs: Matrix[float64]):
     Matrix[int] {.base.} =
   assert false
 
@@ -26,29 +25,29 @@ method predictFromProbs*(self: LossFunc, probs: Matrix[NNFloat]):
 proc newCrossEntropy*(): CrossEntropy {.noSideEffect.} =
   new(result)
 
-method loss*(self: CrossEntropy, output: Matrix[NNFloat],
-    expected: Matrix[NNFloat]): Matrix[NNFloat] {.noSideEffect.} =
-  result = output.reduceRows(0.0, proc(acc, val: NNFloat, row, col: int):
-      NNFloat =
+method loss*(self: CrossEntropy, output: Matrix[float64],
+    expected: Matrix[float64]): Matrix[float64] {.noSideEffect.} =
+  result = output.reduceRows(0.0, proc(acc, val: float64, row, col: int):
+      float64 =
     acc - expected[row, col]*ln(val)
   )
 
-method backward*(self: CrossEntropy, output: Matrix[NNFloat],
-    expected: Matrix[NNFloat]): Matrix[NNFloat] {.noSideEffect.} =
-  result = output.transform((val: NNFloat, row, col) => val - expected[row, col])
+method backward*(self: CrossEntropy, output: Matrix[float64],
+    expected: Matrix[float64]): Matrix[float64] {.noSideEffect.} =
+  result = output.transform((val: float64, row, col) => val - expected[row, col])
 
-method predictFromProbs*(self: CrossEntropy, probs: Matrix[NNFloat]):
+method predictFromProbs*(self: CrossEntropy, probs: Matrix[float64]):
     Matrix[int] {.noSideEffect.} =
   result = probs.reduceRows(
     (0.0, 0),
-    proc(acc: tuple[max: NNFloat, maxIdx: int], val: NNFloat, row, col: int):
-        (NNFloat, int) =
+    proc(acc: tuple[max: float64, maxIdx: int], val: float64, row, col: int):
+        (float64, int) =
       if val > acc.max:
         result = (val, col)
       else:
         result = acc
   ).transform(
-    (val: tuple[max: NNFloat, maxIdx: int]) => val.maxIdx
+    (val: tuple[max: float64, maxIdx: int]) => val.maxIdx
   )
 
 # ==============================================================================
@@ -56,24 +55,24 @@ method predictFromProbs*(self: CrossEntropy, probs: Matrix[NNFloat]):
 proc newBinaryCrossEntropy*(): BinaryCrossEntropy {.noSideEffect.} =
   new(result)
 
-method loss*(self: BinaryCrossEntropy, output: Matrix[NNFloat],
-    expected: Matrix[NNFloat]): Matrix[NNFloat] {.noSideEffect.} =
-  result = output.reduceRows(0.0, proc(acc, val: NNFloat, row, col: int):
-      NNFloat =
+method loss*(self: BinaryCrossEntropy, output: Matrix[float64],
+    expected: Matrix[float64]): Matrix[float64] {.noSideEffect.} =
+  result = output.reduceRows(0.0, proc(acc, val: float64, row, col: int):
+      float64 =
     if expected[row, col] < 1e-5:
       -(1.0 - val).ln
     else:
       -val.ln
   )
 
-method backward*(self: BinaryCrossEntropy, output: Matrix[NNFloat],
-    expected: Matrix[NNFloat]): Matrix[NNFloat] {.noSideEffect.} =
+method backward*(self: BinaryCrossEntropy, output: Matrix[float64],
+    expected: Matrix[float64]): Matrix[float64] {.noSideEffect.} =
   result = output.transform(
-      (val: NNFloat, row, col) => val - expected[row, col])
+      (val: float64, row, col) => val - expected[row, col])
 
-method predictFromProbs*(self: BinaryCrossEntropy, probs: Matrix[NNFloat]):
+method predictFromProbs*(self: BinaryCrossEntropy, probs: Matrix[float64]):
     Matrix[int] {.noSideEffect.} =
-  result = probs.transform(proc(val: NNFloat): int =
+  result = probs.transform(proc(val: float64): int =
     if val >= 0.5: 1
     else: 0
   )
