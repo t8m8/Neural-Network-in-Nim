@@ -1,6 +1,6 @@
 import layers, lossfuncs, optimizers, measures, options
-import "../linalg/matrix"
-import "../utils/mysequtils"
+import ../linalg/matrix
+import ../utils/mysequtils
 
 import algorithm, future
 

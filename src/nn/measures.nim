@@ -1,4 +1,4 @@
-import "../utils/mysequtils"
+import ../utils/mysequtils
 
 import strutils, terminal
 

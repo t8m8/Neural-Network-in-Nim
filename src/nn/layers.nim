@@ -1,4 +1,4 @@
-import "../linalg/matrix"
+import ../linalg/matrix
 
 import math, sequtils, future
 
