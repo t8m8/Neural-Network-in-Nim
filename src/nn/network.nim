@@ -56,10 +56,10 @@ proc loss*(self: var Network, input, expected: Matrix[float64]): float64 =
 
 proc meanLossFromProbs*(self: var Network,
     probs, expected: Matrix[float64]): float64 =
-  self.lossFromProbs(probs, expected) / probs.row.float64
+  self.lossFromProbs(probs, expected) / probs.M.float64
 
 proc meanLoss*(self: var Network, input, expected: Matrix[float64]): float64 =
-  self.loss(input, expected) / input.row.float64
+  self.loss(input, expected) / input.M.float64
 
 proc hitMissCntFromProbs(self: var Network, probs, expected: Matrix[float64]):
     (int, int) =
@@ -117,7 +117,7 @@ proc runBatch(self: var Network, input, expected: Matrix[float64],
     var
       (idx, grad) = (item.idx, item.grad)
       links = Links(self.layers[idx])
-      normalizedGrad = grad.transform((val: float64) => val / input.row.float64)
+      normalizedGrad = grad.transform((val: float64) => val / input.M.float64)
     self.optimizer.update(links.weights, normalizedGrad)
   let loss = self.lossFromProbs(outputs.last, expected)
   let (hit, miss) = self.hitMissCntFromProbs(outputs.last, expected)
@@ -126,11 +126,11 @@ proc runBatch(self: var Network, input, expected: Matrix[float64],
 
 proc runEpoch(self: var Network, input, expected: Matrix[float64],
     options: Options) =
-  let batches: int = (input.row + options.batchSize - 1) div options.batchSize
-  var res = TrResults(totalCount: input.row)
+  let batches: int = (input.M + options.batchSize - 1) div options.batchSize
+  var res = TrResults(totalCount: input.M)
   for i in 0..<batches:
     let lb = i*options.batchSize
-    let ub = min((i + 1)*options.batchSize, input.row) - 1
+    let ub = min((i + 1)*options.batchSize, input.M) - 1
     var
       x = input.slice(lb, ub)
       y = expected.slice(lb, ub)
@@ -155,8 +155,8 @@ proc checkGradient*(self: var Network, input, expected: Matrix[float64],
     var
       (idx, grad) = (item.idx, item.grad)
       links = Links(self.layers[idx])
-    for i in 0..<links.weights.row:
-      for j in 0..<links.weights.col:
+    for i in 0..<links.weights.M:
+      for j in 0..<links.weights.N:
         let x = links.weights[i, j]
         links.weights[i, j] = x - h
         let fx1 = self.loss(input, expected)

@@ -102,7 +102,7 @@ proc newDense*(inputDim, outputDim: int): Dense =
   let d = 1.0 / inputDim.float64
   result.inputDim = inputDim
   result.outputDim = outputDim
-  result.weights = newMatRandom[float64](inputDim, outputDim, -d, d)
+  result.weights = randomMatrix[float64](inputDim, outputDim, -d, d)
 
 proc newDense*(inputDim, outputDim: int, weights: Matrix[float64]): Dense =
   new(result)

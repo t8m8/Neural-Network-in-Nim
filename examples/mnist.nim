@@ -1,15 +1,17 @@
 import nn
-
 import os, strutils, future
 
 proc loadImages(fname: string, size: int): Matrix[float] =
   var f: File = open(fname, FileMode.fmRead)
   defer: close(f)
   var
-    images: Matrix[float] = newMat[float](size, 28 * 28)
+    images: Matrix[float] = matrix[float](colMajor, size, 28 * 28,
+        newSeq[float](size * 28 * 28))
     pos = 0
   while not f.endOfFile:
-    images[pos] = f.readLine().split().map(parseFloat).map((val) => val / 255.0)
+    images[pos] = vector[float](f.readLine().split().map(parseFloat).map(
+      (val) => val / 255.0)
+    )
     pos.inc()
   result = images
 
@@ -17,7 +19,8 @@ proc loadLabels(fname: string, size: int): Matrix[float] =
   var f: File = open(fname, FileMode.fmRead)
   defer: close(f)
   var
-    labels: Matrix[float] = newMat[float](size, 10)
+    labels: Matrix[float] = matrix[float](colMajor, size, 10,
+        newSeq[float](size * 10))
     pos = 0
   while not f.endOfFile:
     labels[pos] = oneHot[float](10, parseInt(f.readLine()))

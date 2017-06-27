@@ -47,9 +47,10 @@ proc newMomentum*(lr: float64 = 0.01, momentum: float64 = 0.9):
 method update*(self: var Momentum, weights: var Matrix[float64],
     gradients: var Matrix[float64]) =
   if self.v.isNil:
-    self.v = newMat[float64](gradients.row, gradients.col)
+    self.v = matrix[float64](gradients.order, gradients.M, gradients.N,
+        newSeq[float64](gradients.M * gradients.N))
 
-  self.v = self.momentum * self.v - self.lr * gradients
+  self.v = (self.momentum * self.v) - (self.lr * gradients)
   weights = self.v
 
 # ==============================================================================
@@ -61,10 +62,11 @@ proc newAdagrad*(lr: float64 = 0.01): AdaGrad {.noSideEffect.} =
 method update*(self: var AdaGrad, weights: var Matrix[float64],
     gradients: var Matrix[float64]) =
   if self.h.isNil:
-    self.h = newMat[float64](gradients.row, gradients.col)
+    self.h = matrix[float64](colMajor, gradients.M, gradients.N,
+        newSeq[float64](gradients.M * gradients.N))
 
-  self.h = self.h + gradients @* gradients
-  weights = weights - (self.lr * gradients @/
+  self.h = self.h + gradients |*| gradients
+  weights = weights - (self.lr * gradients |*|
       (self.h.map((a) => sqrt(a)) + 1e-7))
 
 # ==============================================================================
@@ -80,14 +82,16 @@ proc newAdam*(lr: float64 = 0.001, beta1: float64 = 0.9, beta2: float64 = 0.999)
 method update*(self: var Adam, weights: var Matrix[float64],
     gradients: var Matrix[float64]) =
   if self.v.isNil:
-    self.m = newMat[float64](gradients.row, gradients.col)
-    self.v = newMat[float64](gradients.row, gradients.col)
+    self.m = matrix[float64](colMajor, gradients.M, gradients.N,
+        newSeq[float64](gradients.M * gradients.N))
+    self.v = matrix[float64](colMajor, gradients.M, gradients.N,
+        newSeq[float64](gradients.M * gradients.N))
 
   self.iter.inc
   let lr = self.lr * (1.0 - pow(self.beta2, self.iter.float64)).sqrt /
       (1.0 - pow(self.beta1, self.iter.float64))
 
-  self.m = self.m + (1.0 - self.beta1) @* (gradients - self.m)
-  self.v = self.v + (1.0 - self.beta2) @* (gradients ^ 2 - self.v)
+  self.m = self.m + (1.0 - self.beta1) |*| (gradients - self.m)
+  self.v = self.v + (1.0 - self.beta2) |*| (gradients ^ 2 - self.v)
   gradients = gradients - lr*self.m @/ (self.v.map((a) => sqrt(a)) + 1e-7)
 
